@@ -1,55 +1,318 @@
+```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ezber</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ezber - Dark Edition</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #0a0d14;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 90%;
+    max-width: 500px;
+    padding: 35px;
+    background: #121824;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 40px;
+    margin-bottom: 5px;
+    color: #ffffff;
+}
+
+.subtitle {
+    color: #0ea5e9;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+textarea {
+    width: 100%;
+    height: 140px;
+    background: #0b0f19;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    color: #38bdf8;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 14px;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 15px;
+}
+
+textarea:focus,
+input:focus {
+    border-color: #0ea5e9;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    background: #0b0f19;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    margin: 20px 0 10px;
+    outline: none;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: #0ea5e9;
+    color: #000;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #38bdf8;
+}
+
+.hidden {
+    display: none;
+}
+
+#result {
+    min-height: 25px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+</style>
 </head>
 
 <body>
 
-    <main class="container">
+<main class="container">
 
-        <h1>Ezber</h1>
-        <p class="subtitle">Learn. Practice. Remember.</p>
+<h1>Ezber</h1>
 
-        <section id="home">
-            <h2>Choose a set</h2>
+<p class="subtitle">Learn. Practice. Remember.</p>
 
-            <button onclick="startQuiz()">
-                English Vocabulary
-            </button>
-        </section>
+<section id="home">
 
-        <section id="quiz" class="hidden">
-            <p id="progress"></p>
+<h2 style="font-size: 16px; margin-bottom: 10px; color: #94a3b8;">
+Kelime Listenizi Ekleyin
+</h2>
 
-            <h2 id="question"></h2>
+<textarea
+id="custom-words"
+placeholder="Örnek:
+apple : elma
+book : kitap">
+</textarea>
 
-            <input
-                type="text"
-                id="answer"
-                placeholder="Type your answer..."
-                autocomplete="off"
-            >
+<button onclick="startCustomQuiz()">Testi Baslat</button>
 
-            <button onclick="checkAnswer()">Check</button>
+</section>
 
-            <p id="result"></p>
-        </section>
 
-        <section id="finished" class="hidden">
-            <h2>Finished!</h2>
-            <p id="score"></p>
+<section id="quiz" class="hidden">
 
-            <button onclick="location.reload()">
-                Try again
-            </button>
-        </section>
+<p id="progress" style="color: #94a3b8; font-size: 14px;"></p>
 
-    </main>
+<h2 id="question" style="font-size: 32px; margin: 20px 0; color: #38bdf8;"></h2>
 
-    <script src="script.js"></script>
+<input
+type="text"
+id="answer"
+placeholder="Turkcesini yazin..."
+autocomplete="off">
+
+<button onclick="checkAnswer()">Kontrol Et</button>
+
+<p id="result"></p>
+
+</section>
+
+
+<section id="finished" class="hidden">
+
+<h2>Test Bitti!</h2>
+
+<p
+id="score"
+style="font-size: 20px; color: #38bdf8; margin: 20px 0;">
+</p>
+
+<button onclick="location.reload()">Yeni Liste</button>
+
+</section>
+
+</main>
+
+
+<script>
+
+let cards = [];
+let current = 0;
+let correct = 0;
+let isChecking = false;
+
+
+function startCustomQuiz() {
+
+    const text = document.getElementById("custom-words").value;
+
+    const lines = text.split("\n");
+
+    cards = [];
+
+    lines.forEach(line => {
+
+        const parts = line.split(":");
+
+        if (parts.length === 2) {
+
+            const q = parts[0].trim();
+
+            const a = parts[1]
+                .split(",")
+                .map(x => x.trim().toLowerCase());
+
+            if (q && a.length > 0) {
+                cards.push({
+                    question: q,
+                    answers: a
+                });
+            }
+        }
+    });
+
+
+    if (cards.length === 0) {
+        return alert("Lutfen kelime girin!");
+    }
+
+
+    current = 0;
+    correct = 0;
+
+    cards.sort(() => Math.random() - 0.5);
+
+
+    document.getElementById("home").classList.add("hidden");
+
+    document.getElementById("quiz").classList.remove("hidden");
+
+    showQuestion();
+}
+
+
+function showQuestion() {
+
+    isChecking = false;
+
+    const inp = document.getElementById("answer");
+
+    inp.disabled = false;
+    inp.value = "";
+
+    document.getElementById("progress").textContent =
+        `${current + 1} / ${cards.length}`;
+
+    document.getElementById("question").textContent =
+        cards[current].question;
+
+    document.getElementById("result").textContent = "";
+
+    inp.focus();
+}
+
+
+function checkAnswer() {
+
+    if (isChecking) return;
+
+    const inp = document.getElementById("answer");
+
+    const val = inp.value.trim().toLowerCase();
+
+    if (!val) return;
+
+    isChecking = true;
+
+    inp.disabled = true;
+
+    const accepted = cards[current].answers;
+
+
+    if (accepted.includes(val)) {
+
+        correct++;
+
+        document.getElementById("result").textContent =
+            "Dogru!";
+
+        document.getElementById("result").style.color =
+            "#4ade80";
+
+    } else {
+
+        document.getElementById("result").textContent =
+            `Yanlis! Dogrusu: ${accepted[0]}`;
+
+        document.getElementById("result").style.color =
+            "#f87171";
+    }
+
+
+    setTimeout(nextQuestion, 1200);
+}
+
+
+function nextQuestion() {
+
+    current++;
+
+    if (current >= cards.length) {
+
+        document.getElementById("quiz").classList.add("hidden");
+
+        document.getElementById("finished").classList.remove("hidden");
+
+        document.getElementById("score").textContent =
+            `${correct} / ${cards.length} Dogru!`;
+
+        return;
+    }
+
+    showQuestion();
+}
+
+
+document.getElementById("answer").addEventListener(
+    "keypress",
+    (e) => {
+        if (e.key === "Enter") {
+            checkAnswer();
+        }
+    }
+);
+
+</script>
+
 </body>
 </html>
+```
